@@ -1,0 +1,78 @@
+#define BLYNK_TEMPLATE_ID "TMPL2nARn8-_r"
+#define BLYNK_TEMPLATE_NAME "Quickstart Template"
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+
+const char* ssid = "CHI";
+const char* password = "chimao13";
+char auth[] = "kAhzBs980CBsUJ6GHAoOyZX_FD2ivx1J";  //sent by Blynk
+
+#define CAMERA_MODEL_AI_THINKER // Has PSRAM
+
+#define PIR 14   // PIR sensor pin
+#define LED 4
+#define BUZZER 13  // Buzzer pin
+
+String local_IP;
+
+void startCameraServer();
+
+void takePhoto()
+{
+  digitalWrite(LED, HIGH);
+  delay(200);
+  uint32_t randomNum = random(50000);
+  Serial.println("http://" + local_IP + "/capture?_cb=" + (String)randomNum);
+  Blynk.setProperty(V1, "urls", "http://" + local_IP + "/capture?_cb=" + (String)randomNum);
+  digitalWrite(LED, LOW);
+  delay(1000);
+}
+
+void soundBuzzer()
+{
+  digitalWrite(BUZZER, HIGH); // Turn on the buzzer
+}
+
+void silenceBuzzer()
+{
+  digitalWrite(BUZZER, LOW); // Turn off the buzzer
+}
+
+void sendPushNotification(const char* message)
+{
+  // Implement push notification sending here if needed
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  pinMode(LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);  // Initialize the buzzer pin
+  pinMode(PIR, INPUT);      // Initialize PIR sensor pin
+  Serial.setDebugOutput(true);
+  Serial.println();
+
+  // Initialize Blynk
+  Blynk.begin(auth, ssid, password);
+
+  // Assign local IP to the global variable
+  local_IP = WiFi.localIP().toString();
+}
+
+void loop()
+{
+  Blynk.run();
+
+  int motionDetected = digitalRead(PIR);
+
+  if (motionDetected == HIGH)
+  {
+    Serial.println("Motion Detected!");
+    soundBuzzer();  // Sound the buzzer
+    takePhoto();    // Capture a photo
+    sendPushNotification("Motion Detected!"); // Send push notification
+    delay(3000);
+    silenceBuzzer(); // Silence the buzzer
+  }
+}
